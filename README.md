@@ -38,4 +38,5 @@ Building and running
 4. `cmake $SOURCE_DIR`
 5. `make`
 6. Add directories to `$PYTHONPATH`: `echo 'export PYTHONPATH=$SOURCE_DIR:$BUILD_DIR/lib:$PYTHONPATH' >> ~/.bashrc`
-7. To run the tracker with example data (recorded depth camera videos): `python $SOURCE_DIR/scripts/tracker.py --input=recording.h5 [--gpu]`
+7. To generate the .h5 file from the raw rosbag file: 'python $SOURCE_DIR/cloth/record_rgbd_and_T.py ./cloth/towel/fold_double_preprocessor.bag --topic /preprocessor/kinect1/image /preprocessor/kinect1/depth /tf'
+8. To run the tracker with example data (recorded depth camera videos): `python $SOURCE_DIR/scripts/tracker.py --input=recording.h5 [--gpu]`
