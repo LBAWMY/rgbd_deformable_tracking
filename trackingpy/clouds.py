@@ -39,12 +39,22 @@ def lookup_depth_by_xyz(depth, xyz):
   return out
 
 def downsample(xyz, v):
-  cloud = cloudprocpy.CloudXYZ()
+  cloud1 = cloudprocpy.CloudXYZ()
   xyz1 = np.ones((len(xyz),4),'float')
   xyz1[:,:3] = xyz
-  cloud.from2dArray(xyz1)
-  cloud = cloudprocpy.downsampleCloud(cloud, v)
-  return cloud.to2dArray()[:,:3]
+  cloud1.from2dArray(xyz1) # Line72 in cloudprocpy.cpp
+  cloud1 = cloudprocpy.downsampleCloud(cloud1, v)
+  res = cloud1.to2dArray()[:,:3]
+  return res
+
+def downsample_np(xyz, v):
+  '''Downsample a point cloud by a factor of v.  This is a numpy implementation of the
+     cloudprocpy.downsampleCloud function.'''
+  n = xyz.shape[0]
+  sample_size = int(n * v)
+  idx = np.random.choice(n, sample_size, replace=False)
+  res = xyz[idx]
+  return res
 
 def everything_mask(h, s, v):
   return np.ones_like(h, dtype=bool)
@@ -58,15 +68,23 @@ def yellow_mask(h, s, v):
 def extract_color(rgb, depth, T_w_k, color_mask_func=red_mask, min_height=.7, ds=.015):
   '''Convert rgb/depth to xyz, extract points according to a mask, and downsample'''
 
-  hsv = cv2.cvtColor(rgb, cv2.COLOR_BGR2HSV)
+  if rgb.shape[-1] == 4:
+    alpha = rgb[:, :, 0]
+    rgb_ = rgb[:, :, 1:4]
+  else:
+    rgb_ = rgb
+
+  hsv = cv2.cvtColor(rgb_, cv2.COLOR_RGB2HSV)
   h = hsv[:,:,0]
   s = hsv[:,:,1]
   v = hsv[:,:,2]
   color_mask = color_mask_func(h, s, v)
 
+  depth_nan = np.isnan(depth)
+  depth[depth_nan] = 0
   valid_mask = depth > 0
 
-  xyz_k = depth_to_xyz(depth, depth_scale=1/1000.) # depth_scale converts mm -> meters
+  xyz_k = depth_to_xyz(depth, depth_scale=1) # depth_scale converts mm -> meters 1/1000.
   xyz_w = xyz_k.dot(T_w_k[:3,:3].T) + T_w_k[:3,3][None,None,:]
 
   z = xyz_w[:,:,2]   
@@ -74,9 +92,14 @@ def extract_color(rgb, depth, T_w_k, color_mask_func=red_mask, min_height=.7, ds
   height_mask = xyz_w[:,:,2] > min_height
 
   good_mask = color_mask & valid_mask
+  if rgb.shape[-1] == 4:
+    good_mask &= alpha > 128
   good_xyz = xyz_w[good_mask]
 
-  return downsample(good_xyz, ds)
+  # ds_xyz = downsample(good_xyz, ds)
+  # ds_xyz = downsample_np(good_xyz, ds)
+  ds_xyz = good_xyz
+  return ds_xyz
 
 import unittest
 class Tests(unittest.TestCase):

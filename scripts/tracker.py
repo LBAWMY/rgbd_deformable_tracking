@@ -9,7 +9,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--input', type=str, default=None, help='Optionally provide a recording (from recorder.py). If not provided, point clouds will be streamed live.')
 parser.add_argument('--gpu', action='store_true', help='Use the GPU (CUDA) implementation.')
-parser.add_argument('--obj_type', choices=['cloth', 'suture_pad'], default='cloth')
+parser.add_argument('--obj_type', choices=['cloth', 'suture_pad'], default='suture_pad')
 args = parser.parse_args()
 
 
@@ -94,10 +94,10 @@ def main():
     import h5py
     def stream_rgbd():
       h5 = h5py.File(args.input, 'r')
-      rgbs, depths, T_w_k = h5['rgb'], h5['depth'], np.array(h5['T_w_k'])
+      rgbs, depths, T_w_k = h5['rgb'], h5['depth'], np.array(h5['T_w_k'])[0]
       num_frames = len(rgbs)
       skip = 2
-      start = 160
+      start = 0
       for i_frame in range(start, num_frames, skip):
         print 'Processing frame %d/%d.' % (i_frame+1, num_frames)
         yield rgbs[i_frame], depths[i_frame], T_w_k
@@ -107,7 +107,7 @@ def main():
   tracked_obj = None
   for rgb, depth, T_w_k in stream_rgbd():
     mask_func = clouds.yellow_mask if args.obj_type == 'suture_pad' else clouds.red_mask
-    cloud_xyz = clouds.extract_color(rgb, depth, T_w_k, mask_func)
+    cloud_xyz = clouds.extract_color(rgb, depth, T_w_k, mask_func, ds=1.0)
     if len(cloud_xyz) == 0:
       print 'Filtered cloud is empty. Skipping frame.'
       continue
@@ -117,7 +117,8 @@ def main():
       init_handles = []
       tracked_obj = initialize_tracked_obj(viewer, init_handles, cloud_xyz)
       print 'Initialization ok?'
-      handles = []; plot(viewer, handles, cloud_xyz, T_w_k, tracked_obj)
+      handles = []
+      plot(viewer, handles, cloud_xyz, T_w_k, tracked_obj)
       #viewer.Idle()
       if args.gpu:
         from trackingpy import tracking_gpu
@@ -127,9 +128,11 @@ def main():
 
     tracker.set_input(cloud_xyz, depth, T_w_k)
     out = tracker.step(return_data=True)
-    handles = []; plot(viewer, handles, cloud_xyz, T_w_k, tracked_obj, out['occluded_in_depth_img'], out['occluded_by_model'], out['force_kd'])
+    handles = []
+    plot(viewer, handles, cloud_xyz, T_w_k, tracked_obj, out['occluded_in_depth_img'], out['occluded_by_model'], out['force_kd'])
 
     if not live:
+      # pass
       raw_input('Press enter for the next frame')
 
 if __name__ == '__main__':

@@ -1,0 +1,77 @@
+cmake_minimum_required(VERSION 2.8)
+
+set(PCL_DIR "/usr/local/pcl181/local/share/pcl-1.8")
+find_package(PCL 1.8.1 REQUIRED COMPONENTS)
+include_directories(${PCL_INCLUDE_DIRS})
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
+
+include_directories("/opt/ros/melodic/include")
+find_package(catkin REQUIRED COMPONENTS
+  roscpp
+  rospy
+  sensor_msgs
+  geometry_msgs
+  tf
+)
+
+#include_directories("/home/curl/CUHK/Projects/PACKAGES/eigen-3.0.5/eigen/local/include/eigen3")
+#include_directories("/home/curl/CUHK/Projects/PACKAGES/boost_1_50_0/local/include")
+#include_directories("/home/curl/CUHK/Projects/PACKAGES/boost_1_50_0/local/lib")
+#include_directories("/home/curl/anaconda3/envs/rgbd_tracking/include/python2.7")
+#include_directories("/home/curl/anaconda3/envs/rgbd_tracking/lib/libpython2.7.so")
+
+set(EIGEN_INCLUDE_DIR "/home/curl/CUHK/Projects/PACKAGES/eigen-3.0.5/eigen/local/include/eigen3")
+#find_package(Eigen REQUIRED)
+set(BOOST_ROOT "/home/curl/CUHK/Projects/PACKAGES/boost_1_50_0/local")
+set(BOOST_LIBRARYDIR "/home/curl/CUHK/Projects/PACKAGES/boost_1_50_0/local/lib")
+find_package(Boost 1.50 COMPONENTS system python thread program_options REQUIRED)
+set(PYTHON_INCLUDE_DIR "/home/curl/anaconda3/envs/rgbd_tracking/include/python2.7")
+set(PYTHON_LIBRARY "/home/curl/anaconda3/envs/rgbd_tracking/lib/libpython2.7.so")
+#find_package(PythonLibs REQUIRED)
+include("${CMAKE_SOURCE_DIR}/cmake/boost-python.cmake")
+
+include_directories(SYSTEM ${PCL_INCLUDE_DIRS} /usr/include/openni)
+link_directories(${PCL_LIBRARY_DIRS})
+
+include_directories(SYSTEM ${HACD_INCLUDE_DIRS})
+
+
+if (APPLE)
+	include_directories("/usr/local/Cellar/vtk/5.10.0/include/vtk-5.10")
+endif()
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden -Wno-deprecated")
+
+
+# add_custom_command(
+#   COMMAND "./gen_instantiations.py" 
+#   OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/autogen_instantiations.cpp"
+#   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" 
+#   DEPENDS gen_instantiations.py cloudproc.hpp
+# )
+# add_custom_target(instantiations ALL DEPENDS autogen_instantiations.cpp)
+
+# add_library(cloudproc 
+#   cloudproc.cpp  
+#   sphere_sampling.cpp
+#   mesh_simplification.cpp
+#   vtkQuadricDecimation2.cxx
+#   cloudgrabber.cpp
+#   hacd_unity.cpp
+#   hacd_interface.cpp
+# )
+# # add_dependencies(cloudproc instantiations)
+
+# target_link_libraries (cloudproc ${PCL_LIBRARIES})
+
+boost_python_module(cloudprocpy cloudprocpy.cpp 
+  cloudproc.cpp  
+  sphere_sampling.cpp
+  mesh_simplification.cpp
+  vtkQuadricDecimation2.cxx
+  cloudgrabber.cpp)
+target_link_libraries(cloudprocpy ${Boost_SYSTEM_LIBRARY} ${PCL_LIBRARIES} ${catkin_LIBRARIES})
+
+#add_executable(simplify_test simplify_test.cpp)
+#target_link_libraries(simplify_test ${PCL_LIBRARIES} cloudproc ${PCL_LIBRARIES})

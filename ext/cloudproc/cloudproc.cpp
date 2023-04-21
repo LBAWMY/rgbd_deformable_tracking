@@ -1,7 +1,10 @@
 #include "cloudproc.hpp"
 #include <pcl/io/pcd_io.h>
 #include "boost/format.hpp"
+//#include <ros/ros.h>
+#include <sensor_msgs/PointCloud2.h>
 #include <pcl/filters/voxel_grid.h>
+#include <pcl/filters/approximate_voxel_grid.h>
 #include <pcl/surface/mls.h>
 #include <pcl/surface/gp3.h>
 #include <pcl/io/vtk_io.h>
@@ -17,6 +20,7 @@
 #include "pcl/impl/instantiate.hpp"
 #include <boost/filesystem.hpp>
 #include <pcl/features/integral_image_normal.h>
+#include <pcl/ros/conversions.h>
 #if PCL_MINOR_VERSION > 6
 #include <pcl/filters/median_filter.h>
 #include <pcl/filters/fast_bilateral.h>
@@ -43,10 +47,10 @@ void setWidthToSize(const CloudT& cloud) {
 
 template <class T>
 typename pcl::PointCloud<T>::Ptr readPCD(const std::string& pcdfile) {
-  sensor_msgs::PointCloud2 cloud_blob;
+  pcl::PCLPointCloud2 cloud_blob;
   typename pcl::PointCloud<T>::Ptr cloud (new typename pcl::PointCloud<T>);
   if (pcl::io::loadPCDFile (pcdfile, cloud_blob) != 0) FILE_OPEN_ERROR(pcdfile);
-  pcl::fromROSMsg (cloud_blob, *cloud);
+  pcl::fromPCLPointCloud2(cloud_blob, *cloud);
   return cloud;
 }
 
@@ -63,7 +67,8 @@ void saveCloud(const typename pcl::PointCloud<T>& cloud, const std::string& fnam
 template<class T>
 typename pcl::PointCloud<T>::Ptr downsampleCloud(typename pcl::PointCloud<T>::ConstPtr in, float vsize) {
   typename pcl::PointCloud<T>::Ptr out (new typename pcl::PointCloud<T>);
-  pcl::VoxelGrid< T > sor;
+//  pcl::VoxelGrid< T > sor;
+  pcl::ApproximateVoxelGrid< T > sor;
   sor.setInputCloud (in);
   sor.setLeafSize (vsize, vsize, vsize);
   sor.filter (*out);
@@ -315,8 +320,8 @@ typename pcl::PointCloud<T>::Ptr fastBilateralFilter(typename pcl::PointCloud<T>
 #endif
 }
 
-void removenans(sensor_msgs::PointCloud2& cloud, float fillval=0);
-void removenans(sensor_msgs::PointCloud2& cloud, float fillval) {
+void removenans(pcl::PCLPointCloud2& cloud, float fillval=0);
+void removenans(pcl::PCLPointCloud2& cloud, float fillval) {
   int npts = cloud.width * cloud.height;
   for (int i=0; i < npts; ++i) {
     float* ptdata = (float*)(cloud.data.data() + cloud.point_step * i);

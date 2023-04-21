@@ -77,7 +77,7 @@ pcl::PolygonMesh::Ptr quadricSimplifyVTK(pcl::PolygonMesh& in, float meshDecimat
   vtkSmartPointer<vtkQuadricDecimation2> decimate = vtkSmartPointer<
       vtkQuadricDecimation2>::New();
   decimate->SetTargetReduction(1-meshDecimationFrac);
-  decimate->SetInput(inputPolyData.GetPointer());
+  decimate->SetInputData(inputPolyData.GetPointer());
   decimate->Update();
 
   vtkSmartPointer<vtkPolyData> decimated = vtkSmartPointer<vtkPolyData>::New();

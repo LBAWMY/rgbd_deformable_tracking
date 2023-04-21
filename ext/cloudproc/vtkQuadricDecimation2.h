@@ -54,6 +54,7 @@
 #define __vtkQuadricDecimation2_h
 
 #include "vtkPolyDataAlgorithm.h"
+#include "vtkConfigure.h" // Needed for VTK_USE_64BIT_IDS
 
 class vtkEdgeTable;
 class vtkIdList;
@@ -61,7 +62,7 @@ class vtkPointData;
 class vtkPriorityQueue;
 class vtkDoubleArray;
 
-class VTK_GRAPHICS_EXPORT vtkQuadricDecimation2 : public vtkPolyDataAlgorithm
+class vtkQuadricDecimation2 : public vtkPolyDataAlgorithm
 {
 public:
   vtkTypeMacro(vtkQuadricDecimation2, vtkPolyDataAlgorithm);
