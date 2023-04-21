@@ -15,14 +15,14 @@ Dependencies
 -----
 Required:
 
-  - Python 2.7
+  - Python 2.7 (we create a anaconda environment for this project
   - PyOpenGL >= 3.0.1
   - pygame >= 1.9.1
   - python-opencv
   - h5py
   - numpy
-  - PCL >= 1.6
-  - Boost >= 1.48, including Boost Python
+  - PCL == 1.8 (origin 1.6 is hard to compile)
+  - Boost == 1.50, including Boost Python (full version compiled with Python 2.7)
   - Eigen 3
 
 Optional:
